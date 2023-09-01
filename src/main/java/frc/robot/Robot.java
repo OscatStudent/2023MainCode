@@ -9,13 +9,15 @@ import edu.wpi.first.wpilibj.PS4Controller;
 //import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Timer;
+//private RelativeEncoder m_encoder;
 
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxRelativeEncoder;
+//import com.revrobotics.SparkMaxRelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
 
@@ -33,7 +35,7 @@ public class Robot extends TimedRobot {
   
   private CANSparkMax Motor1 = new CANSparkMax(1, MotorType.kBrushless);
   private CANSparkMax Motor2 = new CANSparkMax(2, MotorType.kBrushless);
-  private CANSparkMax Motor3 = new CANSparkMax(3, MotorType.kBrushless);
+  //private CANSparkMax Motor3 = new CANSparkMax(3, MotorType.kBrushless);
   private CANSparkMax Motor4 = new CANSparkMax(4, MotorType.kBrushless);
   private CANSparkMax Motor5 = new CANSparkMax(5, MotorType.kBrushless);
   private CANSparkMax Motor6 = new CANSparkMax(6, MotorType.kBrushed);
@@ -46,36 +48,48 @@ public class Robot extends TimedRobot {
   // -------------------------------------------------
   // --------------------- ROBOT ---------------------
   // -------------------------------------------------
-
+  private RelativeEncoder m_encoder;
   @Override
   public void robotInit() {
     Motor1.restoreFactoryDefaults();
     Motor2.restoreFactoryDefaults();
-    Motor3.restoreFactoryDefaults();
+    //Motor3.restoreFactoryDefaults();
     Motor4.restoreFactoryDefaults();
 
     Motor6.setIdleMode(IdleMode.kBrake);
 
     CameraServer.startAutomaticCapture();
-
+        /**
+    * In order to read encoder values an encoder object is created using the 
+    * getEncoder() method from an existing CANSparkMax object
+    */
+    m_encoder = Motor1.getEncoder();
     //driveEncoder = Motor1.getEncoder(SparkMaxRelativeEncoder.Type.kQuadrature, 4096);
   }
 
   @Override
   public void robotPeriodic() {
 
+    SmartDashboard.putNumber("Encoder Position", m_encoder.getPosition());
   }
   // --------------------------------------------------
   // ---------------------- AUTO ----------------------
   // --------------------------------------------------
-
+  /**
+     * Encoder position is read from a RelativeEncoder object by calling the
+     * GetPosition() method.
+     * 
+     * GetPosition() returns the position of the encoder in units of revolutions
+     */
+    
   @Override
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
   }
 //Auto is working reliably, 
-//Todo: Tune the values.
-//Todo: Multi auto or add encoder. //see sample for a sendable chooser.
+//TODO: Tune the values.
+//TODO: Multi auto or add encoder. //see sample for a sendable chooser.
+// It looks like the upper travel distance is ~16'
   @Override
   public void autonomousPeriodic() {
     double time = Timer.getFPGATimestamp();
