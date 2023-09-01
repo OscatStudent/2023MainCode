@@ -6,12 +6,16 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.PS4Controller;
-import edu.wpi.first.wpilibj.XboxController;
+//import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.Timer;
+
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxRelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
 
@@ -36,9 +40,9 @@ public class Robot extends TimedRobot {
 
   private MotorControllerGroup Left = new MotorControllerGroup(Motor2);
   private MotorControllerGroup Right = new MotorControllerGroup(Motor1);
-
   DifferentialDrive RobotDrive = new DifferentialDrive(Left, Right);
-
+ 
+  private double startTime;
   // -------------------------------------------------
   // --------------------- ROBOT ---------------------
   // -------------------------------------------------
@@ -53,33 +57,54 @@ public class Robot extends TimedRobot {
     Motor6.setIdleMode(IdleMode.kBrake);
 
     CameraServer.startAutomaticCapture();
+
+    //driveEncoder = Motor1.getEncoder(SparkMaxRelativeEncoder.Type.kQuadrature, 4096);
   }
 
   @Override
   public void robotPeriodic() {
 
   }
-
-
   // --------------------------------------------------
   // ---------------------- AUTO ----------------------
   // --------------------------------------------------
 
   @Override
   public void autonomousInit() {
-    
+    startTime = Timer.getFPGATimestamp();
   }
-
+//Auto is working reliably, 
+//Todo: Tune the values.
+//Todo: Multi auto or add encoder. //see sample for a sendable chooser.
   @Override
   public void autonomousPeriodic() {
-    /*int sval = 0;
-    if (sval < 30) {
-      Motor1.set(0.05);
-      Motor4.set(-0.05);
-      Motor3.set(0.05);
-      Motor2.set(-0.05);
-      sval += 1;
-    }*/
+    double time = Timer.getFPGATimestamp();
+    System.out.println(time - startTime);
+    if (time - startTime < 2.5) {
+      //arm out (increase)
+      Motor5.set(0.125);
+    } else if (time - startTime > 2.5 && time - startTime < 4) {
+      //arm in
+      Motor5.set(-0.125);
+    } else{
+      Motor5.set(0);
+    }
+    
+    if (time - startTime >= 2 && time - startTime < 2.5) {
+      //cube out
+      Motor6.set(0.5);
+    } else {
+      Motor6.set(0);
+    }
+
+    if (time - startTime > 5 && time - startTime < 7) {
+      //drive back
+      RobotDrive.arcadeDrive(0, -0.25);
+    } else if (time - startTime >= 7 && time - startTime < 12){
+      RobotDrive.arcadeDrive(0, -0.5);
+    }else {
+      RobotDrive.arcadeDrive(0, 0);
+    }
   }
 
 
@@ -93,19 +118,23 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    RobotDrive.arcadeDrive(-Controller1.getRightX()/2, Controller1.getLeftY()/2);
+    RobotDrive.arcadeDrive(-Controller1.getRightX()/2, -Controller1.getLeftY()/2);// drive code
 
     if (Controller1.getPOV() == 0) {
-      Motor5.set(0.125);
+      //arm out
+      Motor5.set(0.25);
     } else if (Controller1.getPOV() == 180) {
-      Motor5.set(-0.125);
+      //arm in
+      Motor5.set(-0.25);
     } else {
       Motor5.set(0);
     }
 
     if (Controller1.getTriangleButton()) {
+      //cube out
       Motor6.set(0.5);
     } else if (Controller1.getCircleButton()) {
+      //cube in
       Motor6.set(-0.5);
     } else {
       Motor6.set(0);
