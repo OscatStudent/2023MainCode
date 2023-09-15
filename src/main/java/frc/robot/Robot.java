@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.PS4Controller;
 //import edu.wpi.first.wpilibj.XboxController;
@@ -45,6 +44,8 @@ public class Robot extends TimedRobot {
   DifferentialDrive RobotDrive = new DifferentialDrive(Left, Right);
  
   private double startTime;
+  private float driveSpeedRight;
+  private float driveSpeedLeft;
   // -------------------------------------------------
   // --------------------- ROBOT ---------------------
   // -------------------------------------------------
@@ -85,6 +86,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
+    Motor5.setIdleMode(IdleMode.kBrake);
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
@@ -94,28 +96,28 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double time = Timer.getFPGATimestamp();
     System.out.println(time - startTime);
-    if (time - startTime < 2.5) {
+    if (time - startTime < 2) {
       //arm out (increase)
-      Motor5.set(0.125);
-    } else if (time - startTime > 2.5 && time - startTime < 4) {
+      Motor5.set(0.25);
+    } else if (time - startTime > 2.5 && time - startTime < 4.5) {
       //arm in
-      Motor5.set(-0.125);
+      Motor5.set(-0.25);
     } else{
       Motor5.set(0);
     }
     
-    if (time - startTime >= 2 && time - startTime < 2.5) {
+    if (time - startTime >= 2.1 && time - startTime < 2.5) {
       //cube out
-      Motor6.set(0.5);
+      Motor6.set(1);
     } else {
       Motor6.set(0);
     }
 
-    if (time - startTime > 5 && time - startTime < 7) {
+    if (time - startTime > 2.5 && time - startTime < 3.5) {
       //drive back
       RobotDrive.arcadeDrive(0, -0.25);
-    } else if (time - startTime >= 7 && time - startTime < 12){
-      RobotDrive.arcadeDrive(0, -0.5);
+    } else if (time - startTime >= 3.5 && time - startTime < 11){
+      RobotDrive.arcadeDrive(0, -0.4);
     }else {
       RobotDrive.arcadeDrive(0, 0);
     }
@@ -129,10 +131,37 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
   }
-
+  
+  @Override
+  public  void disabledInit() {
+    Motor5.setIdleMode(IdleMode.kCoast);
+  }
+  
   @Override
   public void teleopPeriodic() {
-    RobotDrive.arcadeDrive(-Controller1.getRightX()/2, -Controller1.getLeftY()/2);// drive code
+    /*if (Controller1.getR1Button()) {
+      RobotDrive.arcadeDrive(-Controller1.getRightX(), -Controller1.getLeftY());// drive code, full speed
+      SmartDashboard.putString("pressed", "pressed :)");
+    } else{
+      RobotDrive.arcadeDrive((-Controller1.getRightX()*3)/4, -(Controller1.getLeftY()*3)/4);// drive code, lower speed
+      SmartDashboard.putString("unpressed", "unpressed :)");
+    }*/
+    
+    if (driveSpeedRight < (-Controller1.getRightX())) {
+      driveSpeedRight += .01;
+    } else if (driveSpeedRight > (-Controller1.getRightX())) {
+      driveSpeedRight -= .01;
+    }
+    
+    if (driveSpeedLeft < (-Controller1.getLeftY())) {
+      driveSpeedLeft += .01;
+    } else if (driveSpeedLeft > (-Controller1.getLeftY())) {
+      driveSpeedLeft -= .01;
+    }
+    
+    RobotDrive.arcadeDrive(driveSpeedRight, driveSpeedLeft);
+    
+   // RobotDrive.arcadeDrive(-Controller1.getRightX()/2, -Controller1.getLeftY()/2);// drive code
 
     if (Controller1.getPOV() == 0) {
       //arm out
