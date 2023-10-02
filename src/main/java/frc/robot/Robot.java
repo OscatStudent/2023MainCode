@@ -44,12 +44,18 @@ public class Robot extends TimedRobot {
   DifferentialDrive RobotDrive = new DifferentialDrive(Left, Right);
  
   private double startTime;
-  private float driveSpeedRight;
-  private float driveSpeedLeft;
+  private float driveSpeed;
+  private float rotationSpeed;
+  //private float turnDifference = 10;
+  private int rampSpeedAdj;
+
   // -------------------------------------------------
   // --------------------- ROBOT ---------------------
   // -------------------------------------------------
-  private RelativeEncoder m_encoder;
+  private RelativeEncoder m1_encoder;
+  private RelativeEncoder m2_Encoder;
+  private final double kDriveTick2Feet = 1.0 / 42 * 4 * 6 * Math.PI / 12;
+
   @Override
   public void robotInit() {
     Motor1.restoreFactoryDefaults();
@@ -64,14 +70,16 @@ public class Robot extends TimedRobot {
     * In order to read encoder values an encoder object is created using the 
     * getEncoder() method from an existing CANSparkMax object
     */
-    m_encoder = Motor1.getEncoder();
+    m1_encoder = Motor1.getEncoder();
+    m2_Encoder = Motor2.getEncoder();
+
     //driveEncoder = Motor1.getEncoder(SparkMaxRelativeEncoder.Type.kQuadrature, 4096);
   }
 
   @Override
   public void robotPeriodic() {
 
-    SmartDashboard.putNumber("Encoder Position", m_encoder.getPosition());
+    SmartDashboard.putNumber("Encoder Position: ", m1_encoder.getPosition());
   }
   // --------------------------------------------------
   // ---------------------- AUTO ----------------------
@@ -87,6 +95,9 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
     Motor5.setIdleMode(IdleMode.kBrake);
+    m1_encoder.setPosition(0);
+    m2_Encoder.setPosition(0);
+
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
@@ -94,7 +105,21 @@ public class Robot extends TimedRobot {
 // It looks like the upper travel distance is ~16'
   @Override
   public void autonomousPeriodic() {
-    double time = Timer.getFPGATimestamp();
+    //encoder is 42 counts per rev
+    double leftPosition = m1_encoder.getPosition() * kDriveTick2Feet;
+    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    double distance = (leftPosition + rightPosition) / 2;
+
+    if (distance < 5){
+      RobotDrive.arcadeDrive(0, 0.25);
+    }
+
+
+
+
+
+    /*************WORKING one piece auto (6-3 points)***********/
+    /*double time = Timer.getFPGATimestamp();
     System.out.println(time - startTime);
     if (time - startTime < 2) {
       //arm out (increase)
@@ -121,6 +146,10 @@ public class Robot extends TimedRobot {
     }else {
       RobotDrive.arcadeDrive(0, 0);
     }
+    /***************************************/
+
+
+
   }
 
 
@@ -130,6 +159,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    Motor5.setIdleMode(IdleMode.kBrake);
   }
   
   @Override
@@ -139,6 +169,8 @@ public class Robot extends TimedRobot {
   
   @Override
   public void teleopPeriodic() {
+    /*******WORKING drive code (non-ramp)*********/
+    
     /*if (Controller1.getR1Button()) {
       RobotDrive.arcadeDrive(-Controller1.getRightX(), -Controller1.getLeftY());// drive code, full speed
       SmartDashboard.putString("pressed", "pressed :)");
@@ -146,49 +178,47 @@ public class Robot extends TimedRobot {
       RobotDrive.arcadeDrive((-Controller1.getRightX()*3)/4, -(Controller1.getLeftY()*3)/4);// drive code, lower speed
       SmartDashboard.putString("unpressed", "unpressed :)");
     }*/
+    /**********************************/
     
-    if (driveSpeedRight < (-Controller1.getRightX())) {
-      driveSpeedRight += .01;
-    } else if (driveSpeedRight > (-Controller1.getRightX())) {
-      driveSpeedRight -= .01;
-    }
+    /************new code****************/
     
-    if (driveSpeedLeft < (-Controller1.getLeftY())) {
-      driveSpeedLeft += .01;
-    } else if (driveSpeedLeft > (-Controller1.getLeftY())) {
-      driveSpeedLeft -= .01;
-    }
+    driveSpeed += ((-Controller1.getLeftY() - driveSpeed) / (20 - rampSpeedAdj));
+    rotationSpeed += ((-Controller1.getRightX() - rotationSpeed) / 10);
     
-    RobotDrive.arcadeDrive(driveSpeedRight, driveSpeedLeft);
-    
-   // RobotDrive.arcadeDrive(-Controller1.getRightX()/2, -Controller1.getLeftY()/2);// drive code
+    RobotDrive.arcadeDrive(rotationSpeed, driveSpeed);
 
-    if (Controller1.getPOV() == 0) {
+    /*************************************/
+
+   
+
+    if (Controller1.getR1Button()) {
       //arm out
       Motor5.set(0.25);
-    } else if (Controller1.getPOV() == 180) {
+    } else if (Controller1.getR2Button()) {
       //arm in
       Motor5.set(-0.25);
     } else {
       Motor5.set(0);
     }
 
-    if (Controller1.getTriangleButton()) {
+    if (Controller1.getL1Button()) {
       //cube out
       Motor6.set(0.5);
-    } else if (Controller1.getCircleButton()) {
+    } else if (Controller1.getL2Button()) {
       //cube in
       Motor6.set(-0.5);
     } else {
       Motor6.set(0);
     }
+  
+    
   }
 
 
   // --------------------------------------------------
   // ------------------- FUNCTIONS --------------------
   // --------------------------------------------------
-
+  
 
 
   // --------------------------------------------------
