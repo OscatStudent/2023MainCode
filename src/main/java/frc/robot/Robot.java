@@ -46,15 +46,17 @@ public class Robot extends TimedRobot {
   private double startTime;
   private float driveSpeed;
   private float rotationSpeed;
+  private double driveDifference;
+  private double rotationDifference;
   //private float turnDifference = 10;
   private int rampSpeedAdj;
 
   // -------------------------------------------------
   // --------------------- ROBOT ---------------------
   // -------------------------------------------------
-  private RelativeEncoder m1_encoder;
+  private RelativeEncoder m1_Encoder;
   private RelativeEncoder m2_Encoder;
-  private final double kDriveTick2Feet = 1.0 / 42 * 4 * 6 * Math.PI / 12;
+  private final double kDriveTick2Feet = (1.0 / 42) * 4 * (6 * Math.PI) / 12;
 
   @Override
   public void robotInit() {
@@ -70,8 +72,10 @@ public class Robot extends TimedRobot {
     * In order to read encoder values an encoder object is created using the 
     * getEncoder() method from an existing CANSparkMax object
     */
-    m1_encoder = Motor1.getEncoder();
+    m1_Encoder = Motor1.getEncoder();
     m2_Encoder = Motor2.getEncoder();
+    //m2_Encoder.setInverted(true);
+
 
     //driveEncoder = Motor1.getEncoder(SparkMaxRelativeEncoder.Type.kQuadrature, 4096);
   }
@@ -79,7 +83,9 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
-    SmartDashboard.putNumber("Encoder Position: ", m1_encoder.getPosition());
+    SmartDashboard.putNumber("Encoder 1 Position: ", m1_Encoder.getPosition());
+    SmartDashboard.putNumber("Encoder 2 Position: ", m2_Encoder.getPosition());
+  
   }
   // --------------------------------------------------
   // ---------------------- AUTO ----------------------
@@ -94,8 +100,10 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
+    Motor1.setIdleMode(IdleMode.kBrake);
+    Motor2.setIdleMode(IdleMode.kBrake);
     Motor5.setIdleMode(IdleMode.kBrake);
-    m1_encoder.setPosition(0);
+    m1_Encoder.setPosition(0);
     m2_Encoder.setPosition(0);
 
   }
@@ -106,14 +114,16 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     //encoder is 42 counts per rev
-    double leftPosition = m1_encoder.getPosition() * kDriveTick2Feet;
-    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
+    double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
     double distance = (leftPosition + rightPosition) / 2;
+    SmartDashboard.putNumber("Distance: ", distance);
 
     if (distance < 5){
       RobotDrive.arcadeDrive(0, 0.25);
+    }else {
+      RobotDrive.arcadeDrive(0, 0);
     }
-
 
 
 
@@ -159,12 +169,19 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    Motor1.setIdleMode(IdleMode.kBrake);
+    Motor2.setIdleMode(IdleMode.kBrake);
     Motor5.setIdleMode(IdleMode.kBrake);
+    m1_Encoder.setPosition(0);
+    m2_Encoder.setPosition(0);
+
   }
   
   @Override
   public  void disabledInit() {
     Motor5.setIdleMode(IdleMode.kCoast);
+    Motor1.setIdleMode(IdleMode.kCoast);
+    Motor2.setIdleMode(IdleMode.kCoast);
   }
   
   @Override
@@ -179,13 +196,31 @@ public class Robot extends TimedRobot {
       SmartDashboard.putString("unpressed", "unpressed :)");
     }*/
     /**********************************/
-    
+    //
     /************new code****************/
+    driveDifference = (-Controller1.getLeftY() - driveSpeed);
+    rotationDifference = (-Controller1.getRightX() - rotationSpeed);
+
+    if(driveDifference > 0.1){
+      rampSpeedAdj = 0;
+    }else {
+      rampSpeedAdj = 19;
+    }
+
+    driveSpeed += (driveDifference / (20 - rampSpeedAdj));
+    rotationSpeed += (rotationDifference / 10);
     
-    driveSpeed += ((-Controller1.getLeftY() - driveSpeed) / (20 - rampSpeedAdj));
-    rotationSpeed += ((-Controller1.getRightX() - rotationSpeed) / 10);
+
+
+    //driveSpeed += ((-Controller1.getLeftY() - driveSpeed) / (20 - rampSpeedAdj));
+    //rotationSpeed += ((-Controller1.getRightX() - rotationSpeed) / 10);
     
     RobotDrive.arcadeDrive(rotationSpeed, driveSpeed);
+
+    double leftPosition = m1_Encoder.getPosition() * kDriveTick2Feet;
+    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    double distance = (leftPosition + rightPosition) / 2 * -1;
+    SmartDashboard.putNumber("Distance: ", distance);
 
     /*************************************/
 
