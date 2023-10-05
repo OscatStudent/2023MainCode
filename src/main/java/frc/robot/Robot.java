@@ -109,7 +109,7 @@ public class Robot extends TimedRobot {
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
-//TODO: Multi auto or add encoder. //see sample for a sendable chooser.
+//TODO: Multi auto. //see sample for a sendable chooser.
 // It looks like the upper travel distance is ~16'
   @Override
   public void autonomousPeriodic() {
