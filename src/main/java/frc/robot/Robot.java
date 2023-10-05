@@ -56,7 +56,9 @@ public class Robot extends TimedRobot {
   // -------------------------------------------------
   private RelativeEncoder m1_Encoder;
   private RelativeEncoder m2_Encoder;
-  private final double kDriveTick2Feet = (1.0 / 42) * 4 * (6 * Math.PI) / 12;
+  //private final double kDriveTick2Feet = (1.0 / 42) * 4 * (6 * Math.PI) / 12;
+  private final double kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
+  
 
   @Override
   public void robotInit() {
@@ -67,7 +69,7 @@ public class Robot extends TimedRobot {
 
     Motor2.setInverted(true);
     Motor2.burnFlash();
-    
+
     Motor6.setIdleMode(IdleMode.kBrake);
 
     CameraServer.startAutomaticCapture();
@@ -117,8 +119,12 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     //encoder is 42 counts per rev
-    double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
-    double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
+    //double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
+    //double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
+    double leftPosition = m1_Encoder.getPosition() * (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);//kDriveTick2Feet;
+    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    //kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
+    
     double distance = (leftPosition + rightPosition) / 2;
     SmartDashboard.putNumber("Distance: ", distance);
 
