@@ -121,7 +121,7 @@ public class Robot extends TimedRobot {
     //encoder is 42 counts per rev
     //double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
     //double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
-    double leftPosition = m1_Encoder.getPosition() * (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);//kDriveTick2Feet;
+    double leftPosition = m1_Encoder.getPosition() * kDriveTick2Feet;
     double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
     //kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
     
