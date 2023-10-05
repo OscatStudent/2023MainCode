@@ -65,6 +65,9 @@ public class Robot extends TimedRobot {
     //Motor3.restoreFactoryDefaults();
     Motor4.restoreFactoryDefaults();
 
+    Motor2.setInverted(true);
+    Motor2.burnFlash();
+    
     Motor6.setIdleMode(IdleMode.kBrake);
 
     CameraServer.startAutomaticCapture();
