@@ -56,7 +56,9 @@ public class Robot extends TimedRobot {
   // -------------------------------------------------
   private RelativeEncoder m1_Encoder;
   private RelativeEncoder m2_Encoder;
-  private final double kDriveTick2Feet = (1.0 / 42) * 4 * (6 * Math.PI) / 12;
+  //private final double kDriveTick2Feet = (1.0 / 42) * 4 * (6 * Math.PI) / 12;
+  private final double kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
+  
 
   @Override
   public void robotInit() {
@@ -64,6 +66,9 @@ public class Robot extends TimedRobot {
     Motor2.restoreFactoryDefaults();
     //Motor3.restoreFactoryDefaults();
     Motor4.restoreFactoryDefaults();
+
+    Motor2.setInverted(true);
+    Motor2.burnFlash();
 
     Motor6.setIdleMode(IdleMode.kBrake);
 
@@ -109,13 +114,17 @@ public class Robot extends TimedRobot {
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
-//TODO: Multi auto or add encoder. //see sample for a sendable chooser.
+//TODO: Multi auto. //see sample for a sendable chooser.
 // It looks like the upper travel distance is ~16'
   @Override
   public void autonomousPeriodic() {
     //encoder is 42 counts per rev
-    double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
-    double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
+    //double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
+    //double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
+    double leftPosition = m1_Encoder.getPosition() * (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);//kDriveTick2Feet;
+    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    //kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
+    
     double distance = (leftPosition + rightPosition) / 2;
     SmartDashboard.putNumber("Distance: ", distance);
 
