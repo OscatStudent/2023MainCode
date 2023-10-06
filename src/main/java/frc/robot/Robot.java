@@ -105,17 +105,35 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
+
     Motor1.setIdleMode(IdleMode.kBrake);
     Motor2.setIdleMode(IdleMode.kBrake);
     Motor5.setIdleMode(IdleMode.kBrake);
+    
     m1_Encoder.setPosition(0);
     m2_Encoder.setPosition(0);
+    
+    errorSum = 0;
+    lastError = 0;
+    lastTimeStamp = Timer.getFPGATimestamp();
+
 
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
 //TODO: Multi auto. //see sample for a sendable chooser.
 // It looks like the upper travel distance is ~16'
+
+  final double kP = 0.05;//0.5
+  final double kI = 0.05;//0.5
+  final double kD = 0.01;//0.1
+  final double iLimit = 1;
+
+  double setpoint = 0;
+  double errorSum = 0;
+  double lastTimeStamp = 0;
+  double lastError = 0;
+
   @Override
   public void autonomousPeriodic() {
     //encoder is 42 counts per rev
@@ -136,9 +154,31 @@ public class Robot extends TimedRobot {
     }*/
     //*****************************/
 
+    if (Controller1.getTriangleButton()) {
+      setpoint = 10;
+    } else if (Controller1.getCircleButton()) {
+      setpoint = 0;
+    }
+
+    // calculations
+    double error = setpoint - distance;
+    double dt = Timer.getFPGATimestamp() - lastTimeStamp;
+
+    if (Math.abs(error) < iLimit) {
+      errorSum += error * dt;
+    }
+
+    double errorRate = (error - lastError) / dt;
     
+    double outputSpeed = kP * error /*test: + kI * errorSum;*/ /*+ kD * errorRate;*/;
 
+    //output to motors
+    RobotDrive.arcadeDrive(0, outputSpeed);
 
+    lastTimeStamp = Timer.getFPGATimestamp();
+    lastError = error;
+
+    /***********************************************************/
     /*************WORKING one piece auto (6-3 points)***********/
     /*double time = Timer.getFPGATimestamp();
     System.out.println(time - startTime);
