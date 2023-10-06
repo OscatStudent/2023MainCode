@@ -128,13 +128,15 @@ public class Robot extends TimedRobot {
     double distance = (leftPosition + rightPosition) / 2;
     SmartDashboard.putNumber("Distance: ", distance);
 
-    if (distance < 5){
+    //*****working auto************/
+    /*if (distance < 5){
       RobotDrive.arcadeDrive(0, 0.25);
     }else {
       RobotDrive.arcadeDrive(0, 0);
-    }
+    }*/
+    //*****************************/
 
-
+    
 
 
     /*************WORKING one piece auto (6-3 points)***********/
