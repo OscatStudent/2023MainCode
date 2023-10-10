@@ -113,6 +113,7 @@ public class Robot extends TimedRobot {
 // It looks like the upper travel distance is ~16'
   @Override
   public void autonomousPeriodic() {
+    //be sure to adjust before comp!!!!
     //encoder is 42 counts per rev
     double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
     double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
@@ -201,7 +202,7 @@ public class Robot extends TimedRobot {
     driveDifference = (-Controller1.getLeftY() - driveSpeed);
     rotationDifference = (-Controller1.getRightX() - rotationSpeed);
 
-    if(driveDifference > 0.1){
+    if(driveDifference > 0.5){ // was .1
       rampSpeedAdj = 0;
     }else {
       rampSpeedAdj = 19;
@@ -215,7 +216,7 @@ public class Robot extends TimedRobot {
     //driveSpeed += ((-Controller1.getLeftY() - driveSpeed) / (20 - rampSpeedAdj));
     //rotationSpeed += ((-Controller1.getRightX() - rotationSpeed) / 10);
     
-    RobotDrive.arcadeDrive(rotationSpeed, driveSpeed);
+    RobotDrive.arcadeDrive(rotationSpeed, driveSpeed/2);
 
     double leftPosition = m1_Encoder.getPosition() * kDriveTick2Feet;
     double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
