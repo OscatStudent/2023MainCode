@@ -43,7 +43,7 @@ public class Robot extends TimedRobot {
   private MotorControllerGroup Right = new MotorControllerGroup(Motor1);
   DifferentialDrive RobotDrive = new DifferentialDrive(Left, Right);
  
-  private double startTime;
+  //private double startTime;
   private float driveSpeed;
   private float rotationSpeed;
   private double driveDifference;
@@ -62,7 +62,9 @@ public class Robot extends TimedRobot {
 //test
   @Override
   public void robotInit() {
-    SmartDashboard.putNumber("kPDefault", .1);
+    SmartDashboard.putNumber("kP: ", .1);
+    SmartDashboard.putNumber("kI: ", .1);
+    SmartDashboard.putNumber("kD: ", .1);
     
     Motor1.restoreFactoryDefaults();
     Motor2.restoreFactoryDefaults();
@@ -89,7 +91,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    SmartDashboard.getNumber("kPGet", 0);
+    kP = SmartDashboard.getNumber("kP: ", 0);
+    kI = SmartDashboard.getNumber("kI: ", 0);
+    kD = SmartDashboard.getNumber("kD: ", 0);
 
     //SmartDashboard.putNumber("Encoder 1 Position: ", m1_Encoder.getPosition());
     //SmartDashboard.putNumber("Encoder 2 Position: ", m2_Encoder.getPosition());
@@ -107,7 +111,7 @@ public class Robot extends TimedRobot {
     
   @Override
   public void autonomousInit() {
-    startTime = Timer.getFPGATimestamp();
+    //startTime = Timer.getFPGATimestamp();
     
     Motor1.setIdleMode(IdleMode.kBrake);
     Motor2.setIdleMode(IdleMode.kBrake);
@@ -127,17 +131,21 @@ public class Robot extends TimedRobot {
 //TODO: Multi auto. //see sample for a sendable chooser.
 // It looks like the upper travel distance is ~16'
 
-  //final double kP = 0.2;//0.5
+  /*final double kP = 0.2;//0.5
   final double kI = 0.05;//0.5
   final double kD = 0.01;//0.1
+  */
+  double kP;
+  double kI;
+  double kD;
+
   final double iLimit = 1;
 
   double setpoint = 0;
   double errorSum = 0;
   double lastTimeStamp = 0;
   double lastError = 0;
-  double kP;
-
+  
   @Override
   public void autonomousPeriodic() {
 
@@ -159,11 +167,6 @@ public class Robot extends TimedRobot {
     }*/
     //*****************************/
 
-    /*if (Controller1.getR1Button()) {
-      setpoint = 10;
-    } else if (Controller1.getR2Button()) {
-      setpoint = 0;
-    }*/
     setpoint = 5;
     SmartDashboard.putNumber("Setpoint: ", setpoint);
 
@@ -176,7 +179,6 @@ public class Robot extends TimedRobot {
     }
 
     double errorRate = (error - lastError) / dt;
-    SmartDashboard.putNumber("kP: " , kP);
     double outputSpeed = kP * error /*test: + kI * errorSum;*/ /*+ kD * errorRate;*/;
     SmartDashboard.putNumber("Output Speed:  ", outputSpeed);
 
@@ -246,6 +248,13 @@ public class Robot extends TimedRobot {
   
   @Override
   public void teleopPeriodic() {
+    
+    /*if (Controller1.getR1Button()) {
+    setpoint = 10;
+  } else if (Controller1.getR2Button()) {
+    setpoint = 0;
+  }*/
+  
     /*******WORKING drive code (non-ramp)*********/
     
     /*if (Controller1.getR1Button()) {
