@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
   private CANSparkMax Motor1 = new CANSparkMax(1, MotorType.kBrushless);
   private CANSparkMax Motor2 = new CANSparkMax(2, MotorType.kBrushless);
   //private CANSparkMax Motor3 = new CANSparkMax(3, MotorType.kBrushless);
-  private CANSparkMax Motor4 = new CANSparkMax(4, MotorType.kBrushless);
+  //private CANSparkMax Motor4 = new CANSparkMax(4, MotorType.kBrushless);
   private CANSparkMax Motor5 = new CANSparkMax(5, MotorType.kBrushless);
   private CANSparkMax Motor6 = new CANSparkMax(6, MotorType.kBrushed);
 
@@ -62,10 +62,12 @@ public class Robot extends TimedRobot {
 //test
   @Override
   public void robotInit() {
+    SmartDashboard.putNumber("kPDefault", .1);
+    
     Motor1.restoreFactoryDefaults();
     Motor2.restoreFactoryDefaults();
     //Motor3.restoreFactoryDefaults();
-    Motor4.restoreFactoryDefaults();
+    //Motor4.restoreFactoryDefaults();
 
     Motor2.setInverted(true);
     Motor2.burnFlash();
@@ -87,9 +89,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    SmartDashboard.getNumber("kPGet", 0);
 
-    SmartDashboard.putNumber("Encoder 1 Position: ", m1_Encoder.getPosition());
-    SmartDashboard.putNumber("Encoder 2 Position: ", m2_Encoder.getPosition());
+    //SmartDashboard.putNumber("Encoder 1 Position: ", m1_Encoder.getPosition());
+    //SmartDashboard.putNumber("Encoder 2 Position: ", m2_Encoder.getPosition());
   
   }
   // --------------------------------------------------
@@ -105,38 +108,86 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     startTime = Timer.getFPGATimestamp();
+    
     Motor1.setIdleMode(IdleMode.kBrake);
     Motor2.setIdleMode(IdleMode.kBrake);
     Motor5.setIdleMode(IdleMode.kBrake);
+    
     m1_Encoder.setPosition(0);
     m2_Encoder.setPosition(0);
+    
+    errorSum = 0;
+    lastError = 0;
+    lastTimeStamp = Timer.getFPGATimestamp();
+
 
   }
 //Auto is working reliably, 
 //TODO: Tune the values.
 //TODO: Multi auto. //see sample for a sendable chooser.
 // It looks like the upper travel distance is ~16'
+
+  //final double kP = 0.2;//0.5
+  final double kI = 0.05;//0.5
+  final double kD = 0.01;//0.1
+  final double iLimit = 1;
+
+  double setpoint = 0;
+  double errorSum = 0;
+  double lastTimeStamp = 0;
+  double lastError = 0;
+  double kP;
+
   @Override
   public void autonomousPeriodic() {
+
+    //TODO: be sure to adjust before comp
     //encoder is 42 counts per rev
-    //double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
-    //double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12 * -1;//kDriveTick2Feet;
-    double leftPosition = m1_Encoder.getPosition() * (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);//kDriveTick2Feet;
-    double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
+    double leftPosition = (m1_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
+    double rightPosition = (m2_Encoder.getPosition() / 42) * 4 * (6 * Math.PI) / 12;//kDriveTick2Feet;
+    //double leftPosition = m1_Encoder.getPosition() * (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);//kDriveTick2Feet;
+    //double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
     //kDriveTick2Feet = (1 / 42) * 4 * (6 * Math.PI) * (1 / 12);
     
     double distance = (leftPosition + rightPosition) / 2;
     SmartDashboard.putNumber("Distance: ", distance);
 
-    if (distance < 5){
-      RobotDrive.arcadeDrive(0, 0.25);
+    /*if (distance < 5){
+      RobotDrive.arcadeDrive(0.25, 0);
     }else {
       RobotDrive.arcadeDrive(0, 0);
+    }*/
+    //*****************************/
+
+    /*if (Controller1.getR1Button()) {
+      setpoint = 10;
+    } else if (Controller1.getR2Button()) {
+      setpoint = 0;
+    }*/
+    setpoint = 5;
+    SmartDashboard.putNumber("Setpoint: ", setpoint);
+
+    // calculations
+    double error = setpoint - distance;
+    double dt = Timer.getFPGATimestamp() - lastTimeStamp;
+
+    if (Math.abs(error) < iLimit) {
+      errorSum += error * dt;
     }
 
+    double errorRate = (error - lastError) / dt;
+    SmartDashboard.putNumber("kP: " , kP);
+    double outputSpeed = kP * error /*test: + kI * errorSum;*/ /*+ kD * errorRate;*/;
+    SmartDashboard.putNumber("Output Speed:  ", outputSpeed);
 
+    //output to motors
+    //RobotDrive.arcadeDrive(outputSpeed, 0);
+    RobotDrive.arcadeDrive(0, 0);
 
+    lastTimeStamp = Timer.getFPGATimestamp();
+    lastError = error;
 
+    /***********************************************************/
     /*************WORKING one piece auto (6-3 points)***********/
     /*double time = Timer.getFPGATimestamp();
     System.out.println(time - startTime);
@@ -207,10 +258,10 @@ public class Robot extends TimedRobot {
     /**********************************/
     //
     /************new code****************/
-    driveDifference = (-Controller1.getLeftY() - driveSpeed);
-    rotationDifference = (-Controller1.getRightX() - rotationSpeed);
+    driveDifference = (Controller1.getLeftY() - driveSpeed);
+    rotationDifference = (Controller1.getRightX() - rotationSpeed);
 
-    if(driveDifference > 0.1){
+    if(driveDifference > 0.5){ // was .1
       rampSpeedAdj = 0;
     }else {
       rampSpeedAdj = 19;
@@ -224,11 +275,11 @@ public class Robot extends TimedRobot {
     //driveSpeed += ((-Controller1.getLeftY() - driveSpeed) / (20 - rampSpeedAdj));
     //rotationSpeed += ((-Controller1.getRightX() - rotationSpeed) / 10);
     
-    RobotDrive.arcadeDrive(rotationSpeed, driveSpeed);
+    RobotDrive.arcadeDrive(rotationSpeed, driveSpeed/2);
 
     double leftPosition = m1_Encoder.getPosition() * kDriveTick2Feet;
     double rightPosition = m2_Encoder.getPosition() * kDriveTick2Feet;
-    double distance = (leftPosition + rightPosition) / 2 * -1;
+    double distance = (leftPosition + rightPosition) / 2;
     SmartDashboard.putNumber("Distance: ", distance);
 
     /*************************************/
